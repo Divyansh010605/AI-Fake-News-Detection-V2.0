@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Veritas Pro | AI Truth Engine</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+</head>
+<body>
+
+<div class="app-container">
+    <aside class="sidebar">
+        <div class="brand">
+            <h2>VERITAS <span>PRO</span></h2>
+        </div>
+        
+        <div class="user-profile">
+            <p>Welcome, <strong>{{ name }}</strong></p>
+            <a href="/logout" class="logout-link">Logout</a>
+        </div>
+
+        <h3>History</h3>
+        <div id="history-list" class="history-list"></div>
+        <button class="clear-btn" onclick="clearHistory()">Clear History</button>
+    </aside>
+
+    <main class="main-content">
+        <div class="card analysis-card">
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('text')">Text</button>
+                <button class="tab" onclick="switchTab('url')">URL Link</button>
+            </div>
+
+            <div id="text-input-section" class="input-wrapper">
+                <textarea id="newsText" placeholder="Paste article content here for analysis..." rows="6"></textarea>
+            </div>
+
+            <div id="url-input-section" class="input-wrapper" style="display:none;">
+                <input type="text" id="newsUrl" placeholder="https://example.com/news-article">
+            </div>
+
+            <button class="analyze-btn" onclick="analyzeNews()">
+                <span>RUN ANALYSIS</span>
+            </button>
+        </div>
+
+        <div id="loader" class="loader-container" style="display:none;">
+            <div class="spinner"></div>
+            <p>Analyzing neural patterns & cross-referencing sources...</p>
+        </div>
+
+        <div id="result" class="result-container" style="display:none;">
+            <div class="result-header">
+                <div class="verdict-box">
+                    <span class="label-title">VERDICT</span>
+                    <h1 id="predictionLabel">FAKE</h1>
+                </div>
+                <div class="confidence-box">
+                    <div class="progress-bg">
+                        <div id="confidenceBar" class="progress-fill" style="width: 0%"></div>
+                    </div>
+                    <span id="confidenceText">0% Confidence</span>
+                </div>
+                <button class="share-btn" onclick="shareResult()">Share</button>
+            </div>
+
+            <div class="verification-note" id="verificationNote"></div>
+
+            <div class="grid-layout">
+                <div class="panel">
+                    <h3><i class="fas fa-brain"></i> AI Logic</h3>
+                    <p class="subtext">Trigger words influencing the decision:</p>
+                    <div id="explanation-tags" class="tags-container"></div>
+                </div>
+
+                <div class="panel">
+                    <h3><i class="fas fa-search"></i> Fact Check</h3>
+                    <p class="subtext">Status: <strong id="factStatus">...</strong></p>
+                    <ul id="sourcesList" class="sources-list"></ul>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

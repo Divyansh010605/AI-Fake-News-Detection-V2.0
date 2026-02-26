@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Sign Up | Veritas Pro</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="auth-container">
+        <div class="card auth-card">
+            <h1>Create Account</h1>
+            <p>Join Veritas Pro Intelligence</p>
+            
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <form method="POST" action="/signup">
+                <div class="input-group">
+                    <input type="text" name="username" placeholder="Choose a Username" required>
+                </div>
+                <div class="input-group">
+                    <input type="password" name="password" placeholder="Choose a Password" required>
+                </div>
+                <button type="submit" class="analyze-btn">Sign Up</button>
+            </form>
+            <p class="auth-footer">Already have an account? <a href="/login">Login</a></p>
+        </div>
+    </div>
+</body>
+</html>
