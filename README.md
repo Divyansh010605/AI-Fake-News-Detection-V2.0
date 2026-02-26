@@ -31,4 +31,3 @@ Veritas AI is an end-to-end Fake News Detection platform that:
   - Gradient accumulation
   - Best model checkpoint saving
 
-Training pipeline implemented in:
