@@ -15,7 +15,7 @@ import os
 # -------------------------
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'veritas-secret-key'  # Security Key
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
@@ -89,11 +89,13 @@ def fact_check_google(query):
         reputable_count = sum(1 for s in found_sources if s['reputable'])
         status = "Verified by Major Sources" if reputable_count >= 1 else ("Sources Found" if found_sources else "Unverified")
         return {"status": status, "sources": found_sources}
-    except:
+    except Exception as e:
+        print(f"Fact-check error: {e}")
         return {"status": "Error Checking", "sources": []}
 
 def predict_news(text):
-    if not model: return "ERROR", 0.0
+    if not model or not tokenizer:
+        return "ERROR", 0.0
     inputs = tokenizer(text, return_tensors="pt", truncation=True, max_length=512).to(device)
     with torch.no_grad():
         outputs = model(**inputs)
@@ -150,8 +152,13 @@ def logout():
 @app.route('/predict', methods=['POST'])
 @login_required
 def predict():
-    if not model: return jsonify({'error': 'Model not loaded.'})
+    if not model or not tokenizer:
+        return jsonify({'error': 'AI model is not loaded. Please contact the administrator.'}), 503
+
     data = request.json
+    if not data:
+        return jsonify({'error': 'No data provided.'}), 400
+
     text = data.get('text', '')
     url = data.get('url', '')
     final_text = text
@@ -162,15 +169,30 @@ def predict():
             article.download()
             article.parse()
             final_text = article.text
-            if len(final_text) < 50: return jsonify({'error': 'URL content too short.'})
+            if len(final_text) < 50:
+                return jsonify({'error': 'URL content too short for analysis.'}), 400
         except Exception as e:
-            return jsonify({'error': f'Scraping error: {str(e)}'})
+            return jsonify({'error': f'Could not fetch article: {str(e)}'}), 400
 
-    if not final_text: return jsonify({'error': 'No text provided.'})
+    if not final_text or not final_text.strip():
+        return jsonify({'error': 'No text provided for analysis.'}), 400
 
     label, confidence = predict_news(final_text)
-    word_attributions = explainer(final_text)
-    top_words = sorted(word_attributions, key=lambda x: abs(x[1]), reverse=True)[:8]
+    if label == "ERROR":
+        return jsonify({'error': 'Prediction failed. Model may be corrupted.'}), 500
+
+    # Truncate text for explainer to prevent OOM on long articles
+    top_words = []
+    if explainer:
+        try:
+            # Limit text for explainer — use first ~300 words to stay within token limits
+            explainer_text = " ".join(final_text.split()[:300])
+            word_attributions = explainer(explainer_text)
+            top_words = sorted(word_attributions, key=lambda x: abs(x[1]), reverse=True)[:8]
+        except Exception as e:
+            print(f"Explainer error: {e}")
+            top_words = []
+
     fact_check = fact_check_google(final_text)
     
     verification_note = ""
@@ -180,11 +202,13 @@ def predict():
         verification_note = "Caution: AI flagged text style, but reputable sources are reporting this. Check context."
     elif label == "REAL" and fact_check['status'] == "Verified by Major Sources":
         verification_note = "Verified: Content seems authentic and is corroborated by major outlets."
+    else:
+        verification_note = "Analysis complete. Cross-reference with trusted sources for full verification."
 
     return jsonify({
         'label': label,
         'confidence': round(confidence * 100, 2),
-        'preview': final_text[:200] + "...",
+        'preview': final_text[:200] + "..." if len(final_text) > 200 else final_text,
         'explanation': top_words,
         'fact_check': fact_check,
         'verification_note': verification_note

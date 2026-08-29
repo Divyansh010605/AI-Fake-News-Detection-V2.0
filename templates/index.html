@@ -2,45 +2,81 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Veritas Pro | AI Truth Engine</title>
+    <meta name="description" content="AI-powered fake news detection engine with real-time fact checking and explainable AI analysis.">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
-    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
 </head>
 <body>
 
+<div class="bg-mesh"></div>
+<div id="toast-container" class="toast-container"></div>
+
+<!-- Mobile Menu Button -->
+<button class="mobile-menu-btn" id="mobileMenuBtn" onclick="toggleSidebar()" aria-label="Toggle menu">
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+    </svg>
+</button>
+
 <div class="app-container">
-    <aside class="sidebar">
+    <!-- Sidebar Overlay (mobile) -->
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+    <aside class="sidebar" id="sidebar">
         <div class="brand">
+            <div class="logo-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+                </svg>
+            </div>
             <h2>VERITAS <span>PRO</span></h2>
         </div>
         
         <div class="user-profile">
             <p>Welcome, <strong>{{ name }}</strong></p>
-            <a href="/logout" class="logout-link">Logout</a>
+            <a href="/logout" class="logout-link">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
+                </svg>
+                Logout
+            </a>
         </div>
 
-        <h3>History</h3>
+        <h3>Analysis History</h3>
         <div id="history-list" class="history-list"></div>
         <button class="clear-btn" onclick="clearHistory()">Clear History</button>
     </aside>
 
     <main class="main-content">
-        <div class="card analysis-card">
+        <div class="analysis-card">
             <div class="tabs">
-                <button class="tab active" onclick="switchTab('text')">Text</button>
-                <button class="tab" onclick="switchTab('url')">URL Link</button>
+                <button class="tab active" id="tab-text" onclick="switchTab('text', this)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="display:inline;vertical-align:middle;margin-right:4px;">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                    </svg>
+                    Text
+                </button>
+                <button class="tab" id="tab-url" onclick="switchTab('url', this)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="display:inline;vertical-align:middle;margin-right:4px;">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m9.86-1.135a4.5 4.5 0 00-1.242-7.244l-4.5-4.5a4.5 4.5 0 00-6.364 6.364L4.34 8.303" />
+                    </svg>
+                    URL
+                </button>
             </div>
 
             <div id="text-input-section" class="input-wrapper">
-                <textarea id="newsText" placeholder="Paste article content here for analysis..." rows="6"></textarea>
+                <textarea id="newsText" placeholder="Paste article content here for analysis..." rows="5"></textarea>
             </div>
 
             <div id="url-input-section" class="input-wrapper" style="display:none;">
-                <input type="text" id="newsUrl" placeholder="https://example.com/news-article">
+                <input type="url" id="newsUrl" placeholder="https://example.com/news-article">
             </div>
 
-            <button class="analyze-btn" onclick="analyzeNews()">
+            <button class="analyze-btn" id="analyzeBtn" onclick="analyzeNews()">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
+                </svg>
                 <span>RUN ANALYSIS</span>
             </button>
         </div>
@@ -54,29 +90,54 @@
             <div class="result-header">
                 <div class="verdict-box">
                     <span class="label-title">VERDICT</span>
-                    <h1 id="predictionLabel">FAKE</h1>
+                    <h1 id="predictionLabel">—</h1>
                 </div>
                 <div class="confidence-box">
+                    <div class="confidence-label">CONFIDENCE</div>
                     <div class="progress-bg">
                         <div id="confidenceBar" class="progress-fill" style="width: 0%"></div>
                     </div>
-                    <span id="confidenceText">0% Confidence</span>
+                    <span id="confidenceText">0%</span>
                 </div>
-                <button class="share-btn" onclick="shareResult()">Share</button>
+                <button class="share-btn" onclick="shareResult()">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0 0a2.25 2.25 0 103.935 2.186 2.25 2.25 0 00-3.935-2.186zm0-12.814a2.25 2.25 0 103.933-2.185 2.25 2.25 0 00-3.933 2.185z" />
+                    </svg>
+                    Share
+                </button>
             </div>
 
             <div class="verification-note" id="verificationNote"></div>
 
+            <div id="textPreviewSection" style="display:none;">
+                <div class="text-preview-label">ANALYZED TEXT</div>
+                <div class="text-preview" id="textPreview"></div>
+            </div>
+
             <div class="grid-layout">
-                <div class="panel">
-                    <h3><i class="fas fa-brain"></i> AI Logic</h3>
-                    <p class="subtext">Trigger words influencing the decision:</p>
+                <div class="panel panel-ai">
+                    <h3>
+                        <span class="panel-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z" />
+                            </svg>
+                        </span>
+                        AI Logic
+                    </h3>
+                    <p class="subtext">Key words influencing the AI decision:</p>
                     <div id="explanation-tags" class="tags-container"></div>
                 </div>
 
-                <div class="panel">
-                    <h3><i class="fas fa-search"></i> Fact Check</h3>
-                    <p class="subtext">Status: <strong id="factStatus">...</strong></p>
+                <div class="panel panel-fact">
+                    <h3>
+                        <span class="panel-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 013 12c0-1.605.42-3.113 1.157-4.418" />
+                            </svg>
+                        </span>
+                        Fact Check
+                    </h3>
+                    <p class="subtext">Status: <span id="factStatus" class="fact-status-badge">...</span></p>
                     <ul id="sourcesList" class="sources-list"></ul>
                 </div>
             </div>
